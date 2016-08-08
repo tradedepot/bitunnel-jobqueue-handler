@@ -13,8 +13,10 @@ const makeNtlmRequest = lastNo => {
     let url = process.env.ODATA_JOBQ_URL || "http://52.4.6.204:4068/PROMASIDOR_NAV/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
     let nextNumber = parseInt(lastNo) + 100;
 
-    nextNumber = utils.pad(nextNumber, 8);
-    url += `&$filter=No gt '${lastNo}' and No lt '${nextNumber}'`;
+    // nextNumber = utils.pad(nextNumber, 8);
+    
+    url += `&$filter=No gt '${lastNo}'`;
+    // url += `&$filter=No gt '${lastNo}' and No lt '${nextNumber}'`;
 
     console.log(url)
 
