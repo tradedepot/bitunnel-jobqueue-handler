@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: bitunnel-jobq-handler
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: jobq-handler
+    spec:
+      containers:
+      - name: bitunnel-jobq-handler
+        image: docker.io/tradedepot/bitunnel-jobq-handler:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: "metadata.namespace"
+        - name: REDIS_MASTER
+          value: "bitunnel-dev.znw8ii.0001.use1.cache.amazonaws.com"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: MIDDLEWARE_EVENT_URL  
+          value: "https://sandbox.tradedepot.io/core/v1/events"
+        - name: ODATA_JOBQ_URL
+          value: "http://52.4.6.204:4068/PROMASIDOR_NAV/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json"
+        - name: ODATA_JOBQ_USER
+          value: "Administrator"
+        - name: ODATA_JOBQ_PASS
+          value: "Awnkm0akm?"
+        - name: ODATA_JOBQ_DOMAIN
+          value: "CORP"
+        - name: TENANT_ID
+          value: "PROMASIDOR_TEST"
