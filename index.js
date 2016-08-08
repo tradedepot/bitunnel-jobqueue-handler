@@ -14,7 +14,7 @@ const makeNtlmRequest = lastNo => {
     let nextNumber = parseInt(lastNo) + 100;
 
     // nextNumber = utils.pad(nextNumber, 8);
-    
+
     url += `&$filter=No gt '${lastNo}'`;
     // url += `&$filter=No gt '${lastNo}' and No lt '${nextNumber}'`;
 
@@ -58,35 +58,37 @@ const getMdPayload = (object, headers, url) => {
     headers: headers,
     body: object,
     json: true,
-    strictSSL: false
+    strictSSL: false,
   }
 }
 
 const onRun = () => {
   redisUtil.getLastFetchedNo()
     .then(lastNo => {
-      console.log(lastNo)
       return makeNtlmRequest(lastNo);
     })
     .then(resp => {
       if (resp) {
         resp = JSON.parse(resp);
         let events = resp.value;
-        if(_.size(events) > 0){
+        if (_.size(events) > 0) {
           let promises = [],
             nos = _.pluck(events, 'No');
 
-          _.each(events, event => {
-            let _event = {
-              "id": "string",
-              "callbackUrl": "string",
-              "createTime": 0,
-              "resourceID": event.EventKey,
-              "eventType": event.EventType
-            };
+          _.each(events, (event, i) => {
+            setTimeout(() => {
+              let _event = {
+                "id": "string",
+                "callbackUrl": "string",
+                "createTime": 0,
+                "resourceID": event.EventKey,
+                "eventType": event.EventType
+              };
 
-            let promise = sendToBitunnel(getMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))
-            promises.push(promise);
+              let promise = sendToBitunnel(getMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))
+              promises.push(promise);
+            }, 10 * i);
+
           })
 
           Promise.all(promises)
@@ -95,7 +97,7 @@ const onRun = () => {
               nos = _.uniq(nos);
               let sorted = _.sortBy(nos, no => no);
               let last = _.last(sorted);
-              if(last){
+              if (last) {
                 redisUtil.setLastFetchedNo(last);
               }
 
@@ -107,7 +109,7 @@ const onRun = () => {
       }
     })
     .catch(error => {
-      console.log(error)
+      console.log(`Error: ${error}`);
     })
 }
 
@@ -130,7 +132,7 @@ redisUtil.getCronPattern()
     startJob(cronPattern || '*/10 *  * * * *'); //10secs
   })
   .catch((exp) => {
-    console.log(exp);
+    console.log(`Error pattern: ${exp}`);
   })
 
 
