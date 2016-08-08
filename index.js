@@ -70,35 +70,38 @@ const onRun = () => {
       if (resp) {
         resp = JSON.parse(resp);
         let events = resp.value;
-        let promises = [],
-          nos = _.pluck(events, 'No');
+        if(_.size(events) > 0){
+          let promises = [],
+            nos = _.pluck(events, 'No');
 
-        _.each(events, event => {
-          let _event = {
-            "id": "string",
-            "callbackUrl": "string",
-            "createTime": 0,
-            "resourceID": event.EventKey,
-            "eventType": event.EventType
-          };
+          _.each(events, event => {
+            let _event = {
+              "id": "string",
+              "callbackUrl": "string",
+              "createTime": 0,
+              "resourceID": event.EventKey,
+              "eventType": event.EventType
+            };
 
-          let promise = sendToBitunnel(getMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))
-          promises.push(promise);
-        })
-
-        Promise.all(promises)
-          .then((success) => {
-            nos = _.uniq(nos);
-            let sorted = _.sortBy(nos, no => no);
-            let last = _.last(sorted);
-
-
-            redisUtil.setLastFetchedNo(last);
+            let promise = sendToBitunnel(getMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))
+            promises.push(promise);
           })
-          .catch(error => {
-            console.log(`An error occured while sending events to middleware, ${error}`);
-          });
 
+          Promise.all(promises)
+            .then((success) => {
+
+              nos = _.uniq(nos);
+              let sorted = _.sortBy(nos, no => no);
+              let last = _.last(sorted);
+              if(last){
+                redisUtil.setLastFetchedNo(last);
+              }
+
+            })
+            .catch(error => {
+              console.log(`An error occured while sending events to middleware, ${error}`);
+            });
+        }
       }
     })
     .catch(error => {
