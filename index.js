@@ -143,8 +143,6 @@ const onRun = () => {
                       logBitunnelError(generateError(lastNo,error));
                   }
                 });
-
-                logBitunnelError(generateError(lastNo,error));
             });
         }
       }
