@@ -23,7 +23,7 @@ spec:
           value: "${REDIS_MASTER}"
         - name: REDIS_PORT
           value: "${REDIS_PORT}"
-        - name: MIDDLEWARE_EVENT_URL  
+        - name: MIDDLEWARE_EVENT_URL
           value: "${MIDDLEWARE_EVENT_URL}"
         - name: ODATA_JOBQ_URL
           value: "${ODATA_JOBQ_URL}"
@@ -35,3 +35,5 @@ spec:
           value: "${ODATA_JOBQ_DOMAIN}"
         - name: TENANT_ID
           value: "${TENANT_ID}"
+        - name: BATCH_SIZE
+          value: "${BATCH_SIZE}"
