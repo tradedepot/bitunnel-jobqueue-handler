@@ -9,6 +9,7 @@ machine:
 dependencies:
   pre:
     - mkdir -p ~/docker
+    - ./scripts/circle_install_dependencies.sh
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
     - docker build -t $EXTERNAL_REGISTRY_ENDPOINT/bitunnel-jobq-handler:build-$CIRCLE_BUILD_NUM .
     - docker save $EXTERNAL_REGISTRY_ENDPOINT/bitunnel-jobq-handler:build-$CIRCLE_BUILD_NUM > ~/docker/image.tar
