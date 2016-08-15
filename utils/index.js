@@ -1,7 +1,7 @@
 'use strict';
 
-exports.pad = function(num, size) {
-  var s = num + "";
+exports.pad = (num, size) => {
+  let s = num + "";
   while (s.length < size) s = "0" + s;
   return s;
 }
