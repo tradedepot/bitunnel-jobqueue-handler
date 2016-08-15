@@ -3,10 +3,11 @@ const httpntlm = require('httpntlm'),
   _ = require('underscore'),
   request = require('request'),
   redisUtil = require('./utils/redis'),
-  CronJob = require('cron').CronJob,
   utils = require('./utils');
 
-let middlewareEventUrl = process.env.MIDDLEWARE_EVENT_URL || 'https://sandbox.tradedepot.io/core/v1/events';
+let middlewareEventUrl = process.env.MIDDLEWARE_EVENT_URL || 'https://sandbox.tradedepot.io/core/v1/events',
+  dispatchDelay = process.env.DISPATCH_DELAY || 10000;
+
 //make ntlm request
 const makeNtlmRequest = lastNo => {
   return new Promise((res, rej) => {
@@ -36,15 +37,6 @@ const makeNtlmRequest = lastNo => {
 const sendToBitunnel = (opt) => {
   return (seqNo, results, i) => {
     return new Promise((res, rej) => {
-      //testing...
-      /**if(i==200){
-        setTimeout(() => {
-          let error="Some random error";
-          results[i]={error: error,seqNo: seqNo, index: i}
-          console.log("error",results[i]);
-          rej(error);
-        }, i*10*5);
-      }else{**/
       setTimeout(() => {
         request(opt, (error, response, body) => {
           results[i] = { error: error, seqNo: seqNo }
@@ -55,7 +47,6 @@ const sendToBitunnel = (opt) => {
           }
         });
       }, i * 10);
-      //}
     });
   }
 }
@@ -103,6 +94,7 @@ const onRun = () => {
                 } else {
                   utils.logBitunnelError(utils.generateError(last, events[n - 1]));
                 }
+                setTimeout(onRun, dispatchDelay);
               })
               .catch(error => {
                 //get the last successful contiguous seqNo greedily. this is the seqNo of the event before the first error if it exist
@@ -130,36 +122,20 @@ const onRun = () => {
                       utils.logBitunnelError(utils.generateError(lastNo, error));
                     }
                   });
+                setTimeout(onRun, dispatchDelay);
               });
+          } else {
+            setTimeout(onRun, dispatchDelay);
           }
         }
       }
     })
     .catch(error => {
       utils.logBitunnelError(`${error}`);
+      setTimeout(onRun, dispatchDelay);
     })
 }
 
-const startJob = cronPattern => {
-  try {
-    let searchJob = new CronJob({
-      cronTime: cronPattern,
-      onTick: onRun,
-      start: true
-    });
-  } catch (ex) {
-    utils.logBitunnelError(`error in job ${ex}`);
-  }
-}
-
-//Is possible to set cron to run 1 minute after a run completes?
-redisUtil.getCronPattern()
-  .then((cronPattern) => {
-    // startJob(cronPattern || '0 */1  * * * *');
-    startJob(cronPattern || '*/30 *  * * * *'); //30secs
-  })
-  .catch((exp) => {
-    utils.logBitunnelError(`Error pattern: ${exp}`);
-  })
+onRun();
 
 console.info('Job Queue Dispatcher running...')
