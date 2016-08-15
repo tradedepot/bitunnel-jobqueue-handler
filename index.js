@@ -11,14 +11,14 @@ let middlewareEventUrl = process.env.MIDDLEWARE_EVENT_URL || 'https://sandbox.tr
 const makeNtlmRequest = lastNo => {
   return new Promise((res, rej) => {
     let url = process.env.ODATA_JOBQ_URL || "http://52.4.6.204:4068/PROMASIDOR_NAV/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
-    let nextNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE ||"1000"));
+    let nextNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
 
     nextNumber = utils.pad(nextNumber, 8);
 
     //url += `&$filter=No gt '${lastNo}'`;
     url += `&$filter=No gt '${lastNo}' and No lt '${nextNumber}'`;
 
-    console.log(url)
+    console.info(`${url} \n`);
 
     httpntlm.get({
       url: url,
@@ -35,7 +35,7 @@ const makeNtlmRequest = lastNo => {
 
 //make http request
 const sendToBitunnel = (opt) => {
-  return (seqNo,results,i)=> {
+  return (seqNo, results, i) => {
     return new Promise((res, rej) => {
       //testing...
       /**if(i==200){
@@ -46,19 +46,19 @@ const sendToBitunnel = (opt) => {
           rej(error);
         }, i*10*5);
       }else{**/
-        setTimeout(() => {
-          request(opt, (error, response, body) => {
-                results[i]={error: error,seqNo: seqNo}
-                if (!error) {
-                  res(body);
-                } else {
-                  rej(error);
-                }
-            });
-          }, i*10);
-        //}
-      });
-    }
+      setTimeout(() => {
+        request(opt, (error, response, body) => {
+          results[i] = { error: error, seqNo: seqNo }
+          if (!error) {
+            res(body);
+          } else {
+            rej(error);
+          }
+        });
+      }, i * 10);
+      //}
+    });
+  }
 }
 
 const getMdPayload = (object, headers, url) => {
@@ -86,10 +86,12 @@ const onRun = () => {
       if (resp) {
         resp = JSON.parse(resp);
         let events = resp.value;
-        //console.log("events",events);
-        let n=events.length;
-        if (n > 0) {
-            const results=new Array(n);
+
+        if (events) {
+          let n = events.length;
+
+          if (n > 0) {
+            const results = new Array(n);
             /*
               Events are externally sorted by the no, no need to sort because it takes O(NlogN) time to sort.
               NAV has done it for us in d query because No is primary key which is default sort key.
@@ -99,51 +101,52 @@ const onRun = () => {
               let sorted = _.sortBy(nos, no => no);
             **/
 
-            let promises=_.map(events, (event, i) => {
-                let _event = {
-                  "id": event.No,
-                  "callbackUrl": "string",
-                  "createTime": 0,
-                  "resourceID": event.EventKey,
-                  "eventType": event.EventType
-                };
-                return sendToBitunnel(getMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))(event.No,results,i);
+            let promises = _.map(events, (event, i) => {
+              let _event = {
+                "id": event.No,
+                "callbackUrl": "string",
+                "createTime": 0,
+                "resourceID": event.EventKey,
+                "eventType": event.EventType
+              };
+              return sendToBitunnel(getMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))(event.No, results, i);
             });
             Promise.all(promises)
-            .then((success) => {
-              let last = events[n-1].No;
-              if (last) {
-                redisUtil.setLastFetchedNo(last);
-              }else{
-                logBitunnelError(generateError(last,events[n-1]));
-              }
-            })
-            .catch(error => {
-              //get the last successful contiguous seqNo greedily. this is the seqNo of the event before the first error if it exist
-              let lastSuccess=Number.MIN_VALUE; //-2^31
-              let firstErrorIndx=-1;
-              for(let i=0;i<results.length;i++){
-                if(typeof results[i] === 'undefined' || results[i].error){
-                    firstErrorIndx=i;
-                    break;
+              .then((success) => {
+                let last = events[n - 1].No;
+                if (last) {
+                  redisUtil.setLastFetchedNo(last);
+                } else {
+                  logBitunnelError(generateError(last, events[n - 1]));
                 }
-              }
-              if(firstErrorIndx-1>=0){
-                lastSuccess=results[firstErrorIndx-1].seqNo;
-              }
-              redisUtil.getLastFetchedNo()
-                .then(lastNo => {
-                    if(lastSuccess!=Number.MIN_VALUE){
-                      if(parseInt(lastSuccess)>parseInt(lastNo)){
-                          lastNo=lastSuccess;
-                          redisUtil.setLastFetchedNo(lastNo);
-                      }
-                      logBitunnelError(generateError(lastNo,error));
-                  }else{
-                      logBitunnelError(generateError(lastNo,error));
+              })
+              .catch(error => {
+                //get the last successful contiguous seqNo greedily. this is the seqNo of the event before the first error if it exist
+                let lastSuccess = Number.MIN_VALUE; //-2^31
+                let firstErrorIndx = -1;
+                for (let i = 0; i < results.length; i++) {
+                  if (typeof results[i] === 'undefined' || results[i].error) {
+                    firstErrorIndx = i;
+                    break;
                   }
-                });
-            });
+                }
+                if (firstErrorIndx - 1 >= 0) {
+                  lastSuccess = results[firstErrorIndx - 1].seqNo;
+                }
+                redisUtil.getLastFetchedNo()
+                  .then(lastNo => {
+                    if (lastSuccess != Number.MIN_VALUE) {
+                      if (parseInt(lastSuccess) > parseInt(lastNo)) {
+                        lastNo = lastSuccess;
+                        redisUtil.setLastFetchedNo(lastNo);
+                      }
+                      logBitunnelError(generateError(lastNo, error));
+                    } else {
+                      logBitunnelError(generateError(lastNo, error));
+                    }
+                  });
+              });
+          }
         }
       }
     })
@@ -152,18 +155,18 @@ const onRun = () => {
     })
 }
 
-const generateError = (seqNo,error) => {
-    return {error: error,lastSeqNo: seqNo};
+const generateError = (seqNo, error) => {
+  return { error: error, lastSeqNo: seqNo };
 }
 
 const logBitunnelError = (error) => {
-    error={
-      errorMessage:`BitunnelJobQueueError: ${JSON.stringify(error)}`,
+  error = {
+      errorMessage: `BitunnelJobQueueError: ${JSON.stringify(error)}`,
       body: error,
       source: "BitunnelJobQueueHandler"
     }
     //send ds over the wire using ...
-   console.log(error);
+  console.error(error);
 }
 
 const startJob = cronPattern => {
@@ -178,7 +181,6 @@ const startJob = cronPattern => {
   }
 }
 
-//get cron Pattern or run every 1 minutes
 //Is possible to set cron to run 1 minute after a run completes?
 redisUtil.getCronPattern()
   .then((cronPattern) => {
@@ -189,5 +191,4 @@ redisUtil.getCronPattern()
     logBitunnelError(`Error pattern: ${exp}`);
   })
 
-
-console.log('Job Queue handler running...')
+console.info('Job Queue Dispatcher running...')
