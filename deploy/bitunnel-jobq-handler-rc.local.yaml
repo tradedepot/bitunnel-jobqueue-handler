@@ -1,19 +1,24 @@
 apiVersion: v1
 kind: ReplicationController
 metadata:
-  name: bitunnel-jobq-handler
+  name: bitunnel-jobq-handler-1
 spec:
   replicas: 1
+  selector:
+    app: bitunnel-jobq-handler
+    buildVersion: "build-1"
   template:
     metadata:
       labels:
-        app: jobq-handler
+        app: bitunnel-jobq-handler
+        buildVersion: "build-1"
     spec:
       containers:
       - name: bitunnel-jobq-handler
-        image: docker.io/tradedepot/bitunnel-jobq-handler:latest
+        image: docker.io/tradedepot/bitunnel-jobq-handler:build-1
         ports:
-        - containerPort: 80
+        - containerPort: 8080
+          name: http
         env:
         - name: KUBERNETES_NAMESPACE
           valueFrom:

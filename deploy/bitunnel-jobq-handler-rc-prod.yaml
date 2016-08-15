@@ -5,7 +5,7 @@ metadata:
 spec:
   replicas: 1
   selector:
-    app: bitunnel-png
+    app: bitunnel-jobq-handler
     buildVersion: "build-${CIRCLE_BUILD_NUM}"
   template:
     metadata:
