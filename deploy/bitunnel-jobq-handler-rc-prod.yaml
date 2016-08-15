@@ -4,6 +4,9 @@ metadata:
   name: bitunnel-jobq-handler-${CIRCLE_BUILD_NUM}
 spec:
   replicas: 1
+  selector:
+    app: bitunnel-png
+    buildVersion: "build-${CIRCLE_BUILD_NUM}"
   template:
     metadata:
       labels:
@@ -13,7 +16,9 @@ spec:
       containers:
       - name: bitunnel-jobq-handler
         image: ${EXTERNAL_REGISTRY_ENDPOINT}/bitunnel-jobq-handler:build-${CIRCLE_BUILD_NUM}
+        ports:
         - containerPort: 8080
+          name: http
         env:
         - name: KUBERNETES_NAMESPACE
           valueFrom:
