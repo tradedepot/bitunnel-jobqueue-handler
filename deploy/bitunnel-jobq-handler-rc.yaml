@@ -42,3 +42,5 @@ spec:
           value: "${PNG_TDC_TENANT_ID}"
         - name: BATCH_SIZE
           value: "${BATCH_SIZE}"
+        - name: DISPATCH_DELAY
+          value: "${DISPATCH_DELAY}"
