@@ -15,7 +15,6 @@ const makeNtlmRequest = lastNo => {
 
     nextNumber = utils.pad(nextNumber, 8);
 
-    //url += `&$filter=No gt '${lastNo}'`;
     url += `&$filter=No gt '${lastNo}' and No lt '${nextNumber}'`;
 
     console.info(`${url} \n`);
@@ -61,22 +60,6 @@ const sendToBitunnel = (opt) => {
   }
 }
 
-const getMdPayload = (object, headers, url) => {
-  headers = _.extend({
-    "Content-Type": "application/json",
-    "Accept": "application/json"
-  }, headers);
-
-  return {
-    url: url,
-    method: 'POST',
-    headers: headers,
-    body: object,
-    json: true,
-    strictSSL: false,
-  }
-}
-
 const onRun = () => {
   redisUtil.getLastFetchedNo()
     .then(lastNo => {
@@ -109,15 +92,16 @@ const onRun = () => {
                 "resourceID": event.EventKey,
                 "eventType": event.EventType
               };
-              return sendToBitunnel(getMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))(event.No, results, i);
+              return sendToBitunnel(utils.constructMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))(event.No, results, i);
             });
             Promise.all(promises)
               .then((success) => {
                 let last = events[n - 1].No;
                 if (last) {
                   redisUtil.setLastFetchedNo(last);
+                  console.info(`${events[0].No} -- ${last} SENT... \n`);
                 } else {
-                  logBitunnelError(generateError(last, events[n - 1]));
+                  utils.logBitunnelError(utils.generateError(last, events[n - 1]));
                 }
               })
               .catch(error => {
@@ -139,10 +123,11 @@ const onRun = () => {
                       if (parseInt(lastSuccess) > parseInt(lastNo)) {
                         lastNo = lastSuccess;
                         redisUtil.setLastFetchedNo(lastNo);
+                        console.info(`${events[0].No} -- ${lastNo} SENT...\n`);
                       }
-                      logBitunnelError(generateError(lastNo, error));
+                      utils.logBitunnelError(utils.generateError(lastNo, error));
                     } else {
-                      logBitunnelError(generateError(lastNo, error));
+                      utils.logBitunnelError(utils.generateError(lastNo, error));
                     }
                   });
               });
@@ -151,22 +136,8 @@ const onRun = () => {
       }
     })
     .catch(error => {
-      logBitunnelError(`${error}`);
+      utils.logBitunnelError(`${error}`);
     })
-}
-
-const generateError = (seqNo, error) => {
-  return { error: error, lastSeqNo: seqNo };
-}
-
-const logBitunnelError = (error) => {
-  error = {
-      errorMessage: `BitunnelJobQueueError: ${JSON.stringify(error)}`,
-      body: error,
-      source: "BitunnelJobQueueHandler"
-    }
-    //send ds over the wire using ...
-  console.error(error);
 }
 
 const startJob = cronPattern => {
@@ -177,7 +148,7 @@ const startJob = cronPattern => {
       start: true
     });
   } catch (ex) {
-    logBitunnelError(`error in job ${ex}`);
+    utils.logBitunnelError(`error in job ${ex}`);
   }
 }
 
@@ -185,10 +156,10 @@ const startJob = cronPattern => {
 redisUtil.getCronPattern()
   .then((cronPattern) => {
     // startJob(cronPattern || '0 */1  * * * *');
-    startJob(cronPattern || '*/30 *  * * * *'); //10secs
+    startJob(cronPattern || '*/30 *  * * * *'); //30secs
   })
   .catch((exp) => {
-    logBitunnelError(`Error pattern: ${exp}`);
+    utils.logBitunnelError(`Error pattern: ${exp}`);
   })
 
 console.info('Job Queue Dispatcher running...')
