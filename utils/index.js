@@ -1,5 +1,6 @@
 'use strict';
- const _ = require('underscore');
+const _ = require('underscore'),
+  CronJob = require('cron').CronJob;
 
 exports.pad = (num, size) => {
   let s = num + "";
@@ -34,5 +35,17 @@ exports.constructMdPayload = (object, headers, url) => {
     body: object,
     json: true,
     strictSSL: false,
+  }
+}
+
+exports.startJob = cronPattern => {
+  try {
+    let bJob = new CronJob({
+      cronTime: cronPattern,
+      onTick: onRun,
+      start: true
+    });
+  } catch (ex) {
+    utils.logBitunnelError(`error in job ${ex}`);
   }
 }
