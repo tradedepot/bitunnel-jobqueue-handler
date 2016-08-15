@@ -4,6 +4,7 @@ metadata:
   name: bitunnel-jobq-handler
   labels:
     app: bitunnel-jobq-handler
+    buildVersion: "build-1"
 spec:
   ports:
   - port: 80
