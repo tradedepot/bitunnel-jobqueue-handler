@@ -60,7 +60,7 @@ const onRun = () => {
       if (resp) {
         resp = JSON.parse(resp);
         let events = resp.value;
-
+        
         if (events) {
           let n = events.length;
 
@@ -85,6 +85,7 @@ const onRun = () => {
               };
               return sendToBitunnel(utils.constructMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))(event.No, results, i);
             });
+            
             Promise.all(promises)
               .then((success) => {
                 let last = events[n - 1].No;
@@ -94,7 +95,7 @@ const onRun = () => {
                 } else {
                   utils.logBitunnelError(utils.generateError(last, events[n - 1]));
                 }
-                setTimeout(onRun, dispatchDelay);
+                breatheAndRestart();
               })
               .catch(error => {
                 //get the last successful contiguous seqNo greedily. this is the seqNo of the event before the first error if it exist
@@ -121,21 +122,32 @@ const onRun = () => {
                     } else {
                       utils.logBitunnelError(utils.generateError(lastNo, error));
                     }
-                    setTimeout(onRun, dispatchDelay);
+                    breatheAndRestart();
+                  }).catch(err => {
+                    utils.logBitunnelError(`${err}`);
+                    breatheAndRestart();
                   });
               });
           } else {
-            setTimeout(onRun, dispatchDelay);
+            breatheAndRestart();
           }
+        } else {
+          breatheAndRestart();
         }
+      } else {
+        breatheAndRestart();
       }
     })
     .catch(error => {
       utils.logBitunnelError(`${error}`);
-      setTimeout(onRun, dispatchDelay);
+      breatheAndRestart();
     })
 }
 
 onRun();
+
+function breatheAndRestart() {
+  setTimeout(onRun, dispatchDelay);
+}
 
 console.info('Job Queue Dispatcher running...')
