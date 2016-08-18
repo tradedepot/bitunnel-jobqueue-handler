@@ -18,7 +18,7 @@ const makeNtlmRequest = lastNo => {
 
     url += `&$filter=No gt '${lastNo}' and No lt '${nextNumber}'`;
 
-    console.info(`${url} \n`);
+    console.info(`${url} ---- ${new Date().toISOString()}\n`);
 
     httpntlm.get({
       url: url,
