@@ -35,7 +35,7 @@ spec:
         - name: ODATA_JOBQ_USER
           value: "${PROD_PNG_NAV_USER}"
         - name: ODATA_JOBQ_PASS
-          value: "${PROD_PNG_NAV_PASS}?"
+          value: "${PROD_PNG_NAV_PASS}"
         - name: ODATA_JOBQ_DOMAIN
           value: "${PROD_ODATA_JOBQ_DOMAIN}"
         - name: TENANT_ID
