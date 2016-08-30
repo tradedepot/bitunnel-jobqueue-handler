@@ -44,3 +44,5 @@ spec:
           value: "${PROD_BATCH_SIZE}"
         - name: DISPATCH_DELAY
           value: "${PROD_DISPATCH_DELAY}"
+        - name: DISPATCH_INTERVAL
+          value: "${PROD_DISPATCH_INTERVAL}"

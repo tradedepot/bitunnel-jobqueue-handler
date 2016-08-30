@@ -42,3 +42,5 @@ spec:
           value: "PROMASIDOR_TEST"
         - name: BATCH_SIZE
           value: "1000"
+        - name: DISPATCH_INTERVAL
+          value: "100"
