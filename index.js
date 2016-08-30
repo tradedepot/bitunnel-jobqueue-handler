@@ -6,12 +6,13 @@ const httpntlm = require('httpntlm'),
   utils = require('./utils');
 
 let middlewareEventUrl = process.env.MIDDLEWARE_EVENT_URL || 'https://sandbox.tradedepot.io/core/v1/events',
-  dispatchDelay = process.env.DISPATCH_DELAY || 10000;
+  dispatchDelay = process.env.DISPATCH_DELAY || 30000,
+  dispatchInterval= process.env.DISPATCH_INTERVAL||100;
 
 //make ntlm request
 const makeNtlmRequest = lastNo => {
   return new Promise((res, rej) => {
-    let url = process.env.ODATA_JOBQ_URL || "http://p01nav.promasidor.systems:5019/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
+    let url = process.env.ODATA_JOBQ_URL || "http://p02nav.promasidor.systems:5048/LiveWebSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
     let nextNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
 
     nextNumber = utils.pad(nextNumber, 8);
@@ -46,7 +47,7 @@ const sendToBitunnel = (opt) => {
             rej(error);
           }
         });
-      }, i * 10);
+      }, i * dispatchInterval);
     });
   }
 }
@@ -60,7 +61,7 @@ const onRun = () => {
       if (resp) {
         resp = JSON.parse(resp);
         let events = resp.value;
-        
+
         if (events) {
           let n = events.length;
 
@@ -85,7 +86,7 @@ const onRun = () => {
               };
               return sendToBitunnel(utils.constructMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))(event.No, results, i);
             });
-            
+
             Promise.all(promises)
               .then((success) => {
                 let last = events[n - 1].No;
