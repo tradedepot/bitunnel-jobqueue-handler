@@ -46,3 +46,5 @@ spec:
           value: "${DISPATCH_DELAY}"
         - name: DISPATCH_INTERVAL
           value: "${DISPATCH_INTERVAL}"
+        - name: MAIL_URL  
+          value: "${MAIL_URL}"
