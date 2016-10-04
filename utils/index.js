@@ -1,6 +1,9 @@
 'use strict';
 const _ = require('underscore'),
-  CronJob = require('cron').CronJob;
+  CronJob = require('cron').CronJob,
+  mailUtil = require('./mail'),
+  redisUtil = require('./redis');
+
 
 exports.pad = (num, size) => {
   let s = num + "";
@@ -16,6 +19,20 @@ exports.logBitunnelError = error => {
     }
     //send ds over the wire using ...
   console.error(error);
+  // send to slack
+  redisUtil.getRecipientUserIds()
+    .then((userIds) => {
+      return redisUtil.getUserNameEmails(userIds);
+    })
+    .then((users) => {
+      return mailUtil.sendMail(users, error);
+    })
+    .then((info) => {
+      console.info(`Mail sent: ${info.response}`);
+    })
+    .catch((err) => {
+      console.error(`An error occured, ${err}`);
+    })
 }
 
 exports.generateError = (seqNo, error) => {
