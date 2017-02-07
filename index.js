@@ -12,7 +12,7 @@ let middlewareEventUrl = process.env.MIDDLEWARE_EVENT_URL || 'https://sandbox.tr
 //make ntlm request
 const makeNtlmRequest = lastNo => {
   return new Promise((res, rej) => {
-    let url = process.env.ODATA_JOBQ_URL || "http://p02nav.promasidor.systems:5048/LiveWebSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
+    let url = process.env.ODATA_JOBQ_URL || "http://p01nav.promasidor.systems:5019/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
     let nextNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
 
     nextNumber = utils.pad(nextNumber, 8);
@@ -23,11 +23,13 @@ const makeNtlmRequest = lastNo => {
 
     httpntlm.get({
       url: url,
-      username: process.env.ODATA_JOBQ_USER || 'Tdmiddleware',
-      password: process.env.ODATA_JOBQ_PASS || 'p@55w0rd',
+      username: 'Tdmiddleware',
+      password:'p@55w0rd',
       workstation: null,
-      domain: process.env.ODATA_JOBQ_DOMAIN || 'CORP'
+      domain:  'CORP'
     }, function(err, result) {
+      console.log("err".err)
+      console.log("result",result)
       if (err) rej(err);
       res(result.body);
     });
@@ -87,6 +89,7 @@ const onRun = () => {
               return sendToBitunnel(utils.constructMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))(event.No, results, i);
             });
 
+
             Promise.all(promises)
               .then((success) => {
                 let last = events[n - 1].No;
@@ -136,6 +139,7 @@ const onRun = () => {
           breatheAndRestart();
         }
       } else {
+        console.log("failed to get respone")
         breatheAndRestart();
       }
     })
