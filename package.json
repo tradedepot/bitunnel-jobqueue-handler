@@ -9,9 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "agentkeepalive": "^3.0.0",
     "cron": "^1.1.0",
     "httpntlm": "^1.6.1",
+    "node-libcurl": "^1.0.0",
     "nodemailer": "^2.6.4",
+    "ntlm": "^0.1.2",
     "redis": "^2.6.2",
     "request": "^2.74.0",
     "underscore": "^1.8.3"
