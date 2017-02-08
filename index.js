@@ -30,9 +30,9 @@ const makeNtlmRequest = lastNo => {
     }, function(err, result) {
       console.log("error",result)
       if (err) rej(err);
-      console.log(res.headers);
-      console.log(res.body);
-      res(result.body);
+      console.log("headers",res.headers);
+      console.log("body",res.body);
+      res(res.body);
     });
   })
 }
