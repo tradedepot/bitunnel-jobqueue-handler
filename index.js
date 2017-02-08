@@ -12,7 +12,7 @@ let middlewareEventUrl = process.env.MIDDLEWARE_EVENT_URL || 'https://sandbox.tr
 //make ntlm request
 const makeNtlmRequest = lastNo => {
   return new Promise((res, rej) => {
-    let url = process.env.ODATA_JOBQ_URL || "http://p01nav.promasidor.systems:5019/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
+    let url = process.env.ODATA_JOBQ_URL || "https://172.31.1.90:5020/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
     let nextNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
 
     nextNumber = utils.pad(nextNumber, 8);
@@ -30,9 +30,9 @@ const makeNtlmRequest = lastNo => {
     }, function(err, result) {
       console.log("error",result)
       if (err) rej(err);
-      console.log(res.headers);
-      console.log(res.body);
-      res(result.body);
+      console.log("headers",res.headers);
+      console.log("body",res.body);
+      res(res.body);
     });
   })
 }
