@@ -23,14 +23,15 @@ const makeNtlmRequest = lastNo => {
 
     httpntlm.get({
       url: url,
-      username: 'Tdmiddleware',
-      password:'p@55w0rd',
+      username: process.env.ODATA_JOBQ_USER || 'Tdmiddleware',
+      password: process.env.ODATA_JOBQ_PASS || 'p@55w0rd',
       workstation: null,
-      domain:  'CORP'
+      domain: process.env.ODATA_JOBQ_DOMAIN || 'CORP'
     }, function(err, result) {
-      console.log("err".err)
-      console.log("result",result)
+      console.log("error",result)
       if (err) rej(err);
+      console.log(res.headers);
+      console.log(res.body);
       res(result.body);
     });
   })
@@ -89,7 +90,6 @@ const onRun = () => {
               return sendToBitunnel(utils.constructMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))(event.No, results, i);
             });
 
-
             Promise.all(promises)
               .then((success) => {
                 let last = events[n - 1].No;
@@ -139,7 +139,6 @@ const onRun = () => {
           breatheAndRestart();
         }
       } else {
-        console.log("failed to get respone")
         breatheAndRestart();
       }
     })
