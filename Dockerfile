@@ -15,16 +15,18 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM node:6.1
+FROM node:6.9
 MAINTAINER Kingsley Ochu <kochu@c2gconsulting.com>
 
 RUN apt-get update
-RUN apt-get install -y curl
+RUN apt-get install -y curl libcurl3 php5-curl
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY package.json /usr/src/app/
 RUN npm install
+RUN npm install node-pre-gyp -g
+RUN npm install node-libcurl --save --build-from-source
 
 COPY . /usr/src/app
 
