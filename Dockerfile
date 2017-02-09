@@ -2,7 +2,7 @@
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are only permitted with express approval from C2G Consulting Ltd.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -18,6 +18,8 @@
 FROM node:6.1
 MAINTAINER Kingsley Ochu <kochu@c2gconsulting.com>
 
+RUN apt-get update
+RUN apt-get install -y curl
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
