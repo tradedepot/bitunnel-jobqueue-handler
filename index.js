@@ -1,18 +1,53 @@
 "use strict";
+const querystring = require('querystring');
+
 const httpntlm = require('httpntlm'),
   _ = require('underscore'),
   request = require('request'),
   redisUtil = require('./utils/redis'),
+  Curl = require( 'node-libcurl' ).Curl,
   utils = require('./utils');
 
 let middlewareEventUrl = process.env.MIDDLEWARE_EVENT_URL || 'https://sandbox.tradedepot.io/core/v1/events',
   dispatchDelay = process.env.DISPATCH_DELAY || 30000,
   dispatchInterval= process.env.DISPATCH_INTERVAL||100;
 
-//make ntlm request
 const makeNtlmRequest = lastNo => {
+    return new Promise((res, rej)=> {
+      var curl = new Curl();
+      let url = process.env.ODATA_JOBQ_URL || "https://p01nav.promasidor.systems:5020/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?";
+      let nextNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
+      let qeury = {"$format":"json","$filter":`No gt '${lastNo}' and No lt '${nextNumber}'`}
+      url += querystring.stringify(qeury);
+      curl.setOpt('URL', url);
+      curl.setOpt('HTTPAUTH', Curl.auth.NTLM);
+      curl.setOpt('USERPWD', 'CORP\\Tdmiddleware:p@55w0rd'); //stuff goes in here
+      curl.setOpt('HTTPHEADER', ['Content-Type: application/json', 'Accept: application/json']);
+
+      nextNumber = utils.pad(nextNumber, 8);
+
+      console.info(`${url} ---- ${new Date().toISOString()}\n`);
+
+      curl
+        .on('end', function(code, body, headers) {
+          //console.log("response_code",code);
+          //console.log("headers",headers);
+          //console.log("body",JSON.parse(body || '{}'));
+          res(JSON.parse(body || '{}'));
+          this.close();
+        })
+        .on('error', function(e) {
+          rej(e);
+          this.close();
+        })
+        .perform();
+    });
+  }
+
+//make ntlm request
+const makeNtlmRequest1 = lastNo => {
   return new Promise((res, rej) => {
-    let url = process.env.ODATA_JOBQ_URL || "http://p02nav.promasidor.systems:5048/LiveWebSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
+    let url = process.env.ODATA_JOBQ_URL || "https://p01nav.promasidor.systems:5020/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
     let nextNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
 
     nextNumber = utils.pad(nextNumber, 8);
@@ -23,13 +58,15 @@ const makeNtlmRequest = lastNo => {
 
     httpntlm.get({
       url: url,
-      username: process.env.ODATA_JOBQ_USER || 'Tdmiddleware',
-      password: process.env.ODATA_JOBQ_PASS || 'p@55w0rd',
+      username: process.env.ODATA_JOBQ_USER || "Tdmiddleware",
+      password: process.env.ODATA_JOBQ_PASS || "p@55w0rd",
       workstation: null,
-      domain: process.env.ODATA_JOBQ_DOMAIN || 'CORP'
+      domain: process.env.ODATA_JOBQ_DOMAIN || "CORP"
     }, function(err, result) {
       if (err) rej(err);
-      res(result.body);
+      console.log("result",result);
+      console.log("body",JSON.parse(result.body || '{}'));
+      res(JSON.parse(result.body || '{}'));
     });
   })
 }
@@ -55,11 +92,11 @@ const sendToBitunnel = (opt) => {
 const onRun = () => {
   redisUtil.getLastFetchedNo()
     .then(lastNo => {
+      console.log("lastNo",lastNo)
       return makeNtlmRequest(lastNo);
     })
     .then(resp => {
       if (resp) {
-        resp = JSON.parse(resp);
         let events = resp.value;
 
         if (events) {
