@@ -17,14 +17,16 @@ const makeNtlmRequest = lastNo => {
       var curl = new Curl();
       let url = process.env.ODATA_JOBQ_URL || "https://p01nav.promasidor.systems:5020/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?";
       let nextNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
+      nextNumber = utils.pad(nextNumber, 8);
       let qeury = {"$format":"json","$filter":`No gt '${lastNo}' and No lt '${nextNumber}'`}
+
       url += querystring.stringify(qeury);
       curl.setOpt('URL', url);
       curl.setOpt('HTTPAUTH', Curl.auth.NTLM);
       curl.setOpt('USERPWD', 'CORP\\Tdmiddleware:p@55w0rd'); //stuff goes in here
       curl.setOpt('HTTPHEADER', ['Content-Type: application/json', 'Accept: application/json']);
 
-      nextNumber = utils.pad(nextNumber, 8);
+      
 
       console.info(`${url} ---- ${new Date().toISOString()}\n`);
 
