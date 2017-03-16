@@ -16,9 +16,10 @@ const makeNtlmRequest = lastNo => {
     return new Promise((res, rej)=> {
       var curl = new Curl();
       let url = process.env.ODATA_JOBQ_URL || "https://p01nav.promasidor.systems:5020/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?";
-      let nextNumber = parseInt(lastNo+1) + parseInt((process.env.BATCH_SIZE || "1000"));
-      nextNumber = utils.pad(nextNumber, 8);
-      let qeury = {"$format":"json","$filter":`No gt '${lastNo}' and No lt '${nextNumber}'`}
+      const startNumber = utils.pad(parseInt(lastNo)+1, 8);
+      let endNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
+      endNumber = utils.pad(endNumber, 8);
+      let qeury = {"$format":"json","$filter":`No gt '${startNumber}' and No lt '${endNumber}'`}
 
       url += querystring.stringify(qeury);
       curl.setOpt('URL', url);
