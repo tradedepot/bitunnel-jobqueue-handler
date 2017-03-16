@@ -28,7 +28,7 @@ const makeNtlmRequest = lastNo => {
 
 
 
-      console.info(`${url} ---- ${new Date().toISOString()}\n`);
+      console.info(`${url}       ----      ${new Date().toISOString()}\n`);
 
       curl
         .on('end', function(code, body, headers) {
@@ -49,11 +49,7 @@ const makeNtlmRequest = lastNo => {
 //make ntlm request
 const makeNtlmRequest1 = lastNo => {
   return new Promise((res, rej) => {
-<<<<<<< HEAD
-    let url = process.env.ODATA_JOBQ_URL || "http://p01nav.promasidor.systems:5019/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
-=======
     let url = process.env.ODATA_JOBQ_URL || "https://p01nav.promasidor.systems:5020/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?$format=json";
->>>>>>> c686a100a61fbb914083adaf675d47c6dd8c8330
     let nextNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
 
     nextNumber = utils.pad(nextNumber, 8);
@@ -64,20 +60,11 @@ const makeNtlmRequest1 = lastNo => {
 
     httpntlm.get({
       url: url,
-<<<<<<< HEAD
-      username: 'Tdmiddleware',
-      password:'p@55w0rd',
-      workstation: null,
-      domain:  'CORP'
-=======
       username: process.env.ODATA_JOBQ_USER || "Tdmiddleware",
       password: process.env.ODATA_JOBQ_PASS || "p@55w0rd",
       workstation: null,
       domain: process.env.ODATA_JOBQ_DOMAIN || "CORP"
->>>>>>> c686a100a61fbb914083adaf675d47c6dd8c8330
     }, function(err, result) {
-      console.log("err".err)
-      console.log("result",result)
       if (err) rej(err);
       console.log("result",result);
       console.log("body",JSON.parse(result.body || '{}'));
@@ -139,7 +126,6 @@ const onRun = () => {
               return sendToBitunnel(utils.constructMdPayload(_event, { tenant_id: process.env.TENANT_ID || "PROMASIDOR_TEST", origin_user: event.OriginUser }, middlewareEventUrl))(event.No, results, i);
             });
 
-
             Promise.all(promises)
               .then((success) => {
                 let last = events[n - 1].No;
@@ -189,7 +175,6 @@ const onRun = () => {
           breatheAndRestart();
         }
       } else {
-        console.log("failed to get respone")
         breatheAndRestart();
       }
     })
