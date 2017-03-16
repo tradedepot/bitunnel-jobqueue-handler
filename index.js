@@ -19,9 +19,9 @@ const makeNtlmRequest = lastNo => {
       const startNumber = utils.pad(parseInt(lastNo)+1, 8);
       let endNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
       endNumber = utils.pad(endNumber, 8);
-      let qeury = {"$format":"json","$filter":`No gt '${startNumber}' and No lt '${endNumber}'`}
+      let query = {"$format":"json","$filter":`No gt '${startNumber}' and No lt '${endNumber}'`}
 
-      url += querystring.stringify(qeury);
+      url += querystring.stringify(query);
       curl.setOpt('URL', url);
       curl.setOpt('HTTPAUTH', Curl.auth.NTLM);
       curl.setOpt('USERPWD', 'CORP\\Tdmiddleware:p@55w0rd'); //stuff goes in here
