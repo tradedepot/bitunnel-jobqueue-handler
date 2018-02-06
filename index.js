@@ -10,13 +10,14 @@ const httpntlm = require('httpntlm'),
 
 let middlewareEventUrl = process.env.MIDDLEWARE_EVENT_URL || 'https://sandbox.tradedepot.io/core/v1/events',
   dispatchDelay = process.env.DISPATCH_DELAY || 30000,
-  dispatchInterval= process.env.DISPATCH_INTERVAL||100;
+  dispatchInterval= process.env.DISPATCH_INTERVAL||100,
+  backOff = process.env.BACK_OFF || 10;
 
 const makeNtlmRequest = lastNo => {
     return new Promise((res, rej)=> {
       var curl = new Curl();
       let url = process.env.ODATA_JOBQ_URL || "https://p01nav.promasidor.systems:5020/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?";
-      const startNumber = utils.pad(parseInt(lastNo)+1, 8);
+      const startNumber = utils.pad(parseInt(lastNo)+(1 - backOff), 8);
       let endNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
       endNumber = utils.pad(endNumber, 8);
       let query = {"$format":"json","$filter":`No ge '${startNumber}' and No lt '${endNumber}'`}
