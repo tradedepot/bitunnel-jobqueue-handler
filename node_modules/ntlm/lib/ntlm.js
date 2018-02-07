@@ -226,7 +226,7 @@ exports.challengeHeader = function (hostname, domain) {
 };
 
 exports.responseHeader = function (res, url, domain, username, password) {
-  var serverNonce = new Buffer((res.headers['www-authenticate'].match(/^NTLM\s+(.+?)(,|\s+)/) || [])[1], 'base64');
+  var serverNonce = new Buffer((res.headers['www-authenticate'].match(/^NTLM\s+(.+?)(,|\s+|$)/) || [])[1], 'base64');
   var hostname = require('url').parse(url).hostname;
   return 'NTLM ' + exports.encodeType3(username, hostname, domain, exports.decodeType2(serverNonce), password).toString('base64')
 };
