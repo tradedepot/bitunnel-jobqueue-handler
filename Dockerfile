@@ -23,8 +23,8 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY package.json /usr/src/app/
+RUN rm -rvf node_modules
 RUN npm install
-RUN npm install node-libcurl --build-from-source
 
 COPY . /usr/src/app
 
