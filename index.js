@@ -10,20 +10,30 @@ const httpntlm = require('httpntlm'),
 
 let middlewareEventUrl = process.env.MIDDLEWARE_EVENT_URL || 'https://sandbox.tradedepot.io/core/v1/events',
   dispatchDelay = process.env.DISPATCH_DELAY || 30000,
-  dispatchInterval= process.env.DISPATCH_INTERVAL||100;
+  dispatchInterval= process.env.DISPATCH_INTERVAL||100,
+  backOff= process.env.BACK_OFF||10;
 
 const makeNtlmRequest = lastNo => {
     return new Promise((res, rej)=> {
       var curl = new Curl();
       let url = process.env.ODATA_JOBQ_URL || "https://p01nav.promasidor.systems:5020/PROMTESTNGWEBSVC/OData/Company('PROMASIDOR%20Nigeria')/tdmiddlewarevent?";
-      let nextNumber = parseInt(lastNo) + parseInt((process.env.BATCH_SIZE || "1000"));
+      const lastNum = parseInt(lastNo);
+      if (isNaN(lastNum)) {
+        console.info(`invalid number ${lastNum}`);
+        return
+      }
+      let startNum = lastNum - backOff;
+      if (startNum < 0) {
+        startNum = 0
+      }
+      let nextNumber = lastNum + parseInt((process.env.BATCH_SIZE || "1000"));
       nextNumber = utils.pad(nextNumber, 8);
-      let qeury = {"$format":"json","$filter":`No gt '${lastNo}' and No lt '${nextNumber}'`}
+      let qeury = {"$format":"json","$filter":`No gt '${startNum}' and No lt '${nextNumber}'`}
 
       url += querystring.stringify(qeury);
       curl.setOpt('URL', url);
       curl.setOpt('HTTPAUTH', Curl.auth.NTLM);
-      curl.setOpt('USERPWD', 'CORP\\Tdmiddleware:p@55w0rd'); //stuff goes in here
+      curl.setOpt('USERPWD', `CORP\\Tdmiddleware:${process.env.ODATA_JOBQ_PASS}`); //stuff goes in here
       curl.setOpt('HTTPHEADER', ['Content-Type: application/json', 'Accept: application/json']);
 
       
