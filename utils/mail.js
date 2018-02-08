@@ -3,8 +3,9 @@ const _ = require('underscore'),
   mailer = require('nodemailer'),
   tpl = require('./mail-template');
   
+const email_url = process.env.MAIL_URL || "smtps://bitunnel%40c2gconsulting.com:1ndieg0g0@smtp.gmail.com"
 // create reusable transporter object using the default SMTP transport 
-const transporter = mailer.createTransport(process.env.MAIL_URL);
+const transporter = mailer.createTransport(email_url);
 
 // setup e-mail data with unicode symbols 
 let mailOptions = {
