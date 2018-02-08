@@ -5,6 +5,9 @@ machine:
     version: 2.7.3
   services:
     - docker
+  node:
+    version: 9.0
+
 
 dependencies:
   pre:
