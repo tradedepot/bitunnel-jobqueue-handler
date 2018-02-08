@@ -25,8 +25,6 @@ WORKDIR /usr/src/app
 
 COPY package.json /usr/src/app/
 RUN npm install
-RUN npm install node-pre-gyp -g
-RUN npm install node-libcurl --save --build-from-source
 
 COPY . /usr/src/app
 
