@@ -28,7 +28,7 @@ const makeNtlmRequest = lastNo => {
       }
       let nextNumber = lastNum + parseInt((process.env.BATCH_SIZE || "1000"));
       nextNumber = utils.pad(nextNumber, 8);
-      let qeury = {"$format":"json","$filter":`No gt '${startNum}' and No lt '${nextNumber}'`}
+      let qeury = {"$format":"json","$filter":`No gt '${utils.pad(startNum, 8)}' and No lt '${nextNumber}'`}
 
       url += querystring.stringify(qeury);
       curl.setOpt('URL', url);
