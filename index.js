@@ -10,8 +10,9 @@ const httpntlm = require('httpntlm'),
 
 let middlewareEventUrl = process.env.MIDDLEWARE_EVENT_URL || 'https://sandbox.tradedepot.io/core/v1/events',
   dispatchDelay = process.env.DISPATCH_DELAY || 30000,
-  dispatchInterval= process.env.DISPATCH_INTERVAL||100,
-  backOff= process.env.BACK_OFF||10;
+  dispatchInterval= process.env.DISPATCH_INTERVAL||100;
+  
+const backOff= process.env.BACK_OFF || 10;
 
 const makeNtlmRequest = lastNo => {
     return new Promise((res, rej)=> {
@@ -22,7 +23,7 @@ const makeNtlmRequest = lastNo => {
         console.info(`invalid number ${lastNum}`);
         return
       }
-      let startNum = lastNum - backOff;
+      let startNum = lastNum;
       if (startNum < 0) {
         startNum = 0
       }
@@ -140,6 +141,8 @@ const onRun = () => {
               .then((success) => {
                 let last = events[n - 1].No;
                 if (last) {
+                  last = last - backOff;
+                  if (last < 0) last = 0;
                   redisUtil.setLastFetchedNo(last);
                   console.info(`${events[0].No} -- ${last} SENT... \n`);
                 } else {
@@ -148,35 +151,8 @@ const onRun = () => {
                 breatheAndRestart();
               })
               .catch(error => {
-                //get the last successful contiguous seqNo greedily. this is the seqNo of the event before the first error if it exist
-                let lastSuccess = Number.MIN_VALUE; //-2^31
-                let firstErrorIndx = -1;
-                for (let i = 0; i < results.length; i++) {
-                  if (typeof results[i] === 'undefined' || results[i].error) {
-                    firstErrorIndx = i;
-                    break;
-                  }
-                }
-                if (firstErrorIndx - 1 >= 0) {
-                  lastSuccess = results[firstErrorIndx - 1].seqNo;
-                }
-                redisUtil.getLastFetchedNo()
-                  .then(lastNo => {
-                    if (lastSuccess != Number.MIN_VALUE) {
-                      if (parseInt(lastSuccess) > parseInt(lastNo)) {
-                        lastNo = lastSuccess;
-                        redisUtil.setLastFetchedNo(lastNo);
-                        console.info(`${events[0].No} -- ${lastNo} SENT...\n`);
-                      }
-                      utils.logBitunnelError(utils.generateError(lastNo, error));
-                    } else {
-                      utils.logBitunnelError(utils.generateError(lastNo, error));
-                    }
-                    breatheAndRestart();
-                  }).catch(err => {
-                    utils.logBitunnelError(`${err}`);
-                    breatheAndRestart();
-                  });
+                utils.logBitunnelError(`${error}`);
+                breatheAndRestart();
               });
           } else {
             breatheAndRestart();
