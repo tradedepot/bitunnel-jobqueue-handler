@@ -17,7 +17,7 @@ jobs:
     environment:
       CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
       CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
-      export PATH="$PATH:/home/bin"
+      
     steps:
       run:
         name: Update Path
