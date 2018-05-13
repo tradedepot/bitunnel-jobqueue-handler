@@ -19,7 +19,7 @@ dependencies:
 
 test:
   override:
-    - echo "Todo be added"
+    - echo "Todo be added "
 
 deployment:
   develop:
