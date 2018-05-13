@@ -1,59 +1,106 @@
-version: 2.0
-
+# This configuration was automatically generated from a CircleCI 1.0 config.
+# It should include any build commands you had along with commands that CircleCI
+# inferred from your project structure. We strongly recommend you read all the
+# comments in this file to understand the structure of CircleCI 2.0, as the idiom
+# for configuration has changed substantially in 2.0 to allow arbitrary jobs rather
+# than the prescribed lifecycle of 1.0. In general, we recommend using this generated
+# configuration as a reference rather than using it in production, though in most
+# cases it should duplicate the execution of your original 1.0 config.
+version: 2
 jobs:
   build:
+    working_directory: ~/tradedepot/bitunnel-jobqueue-handler
+    parallelism: 1
+    shell: /bin/bash --login
+    # CircleCI 2.0 does not support environment variables that refer to each other the same way as 1.0 did.
+    # If any of these refer to each other, rewrite them so that they don't or see https://circleci.com/docs/2.0/env-vars/#interpolating-environment-variables-to-set-other-environment-variables .
     environment:
+      CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
+      CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
       PATH: $PATH:/home/bin
-    python:
-      version: 2.7.3
-    services:
-      - docker
-    node:
-      version: 9.0
-
-
-run:
-  pre:
-    - mkdir -p ~/docker
-    - ./scripts/circle_install_dependencies.sh
-    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-    - docker build -t $EXTERNAL_REGISTRY_ENDPOINT/bitunnel-jobq-handler:build-$CIRCLE_BUILD_NUM .
-    - docker save $EXTERNAL_REGISTRY_ENDPOINT/bitunnel-jobq-handler:build-$CIRCLE_BUILD_NUM > ~/docker/image.tar
-
-run:
-  name: test
-  command:
-    - echo "Todo be added"
-
-steps:
-  deploy:
-    develop:
-      branch: develop
-      commands:
-        # Using docker hub...
-        - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-        - docker push $EXTERNAL_REGISTRY_ENDPOINT/bitunnel-jobq-handler > /dev/null
-        # KUBERNETES INIT begins
-        - kubectl config set-credentials aws_kubernetes --username=$BITUNNEL_KUBERNETES_API_USER --password=$BITUNNEL_KUBERNETES_API_PASS
-        - kubectl config set-cluster aws_kubernetes --insecure-skip-tls-verify=true --server=https://$BITUNNEL_KUBERNETES_API_HOST
-        - kubectl config set-context aws_kubernetes --user=aws_kubernetes --namespace=default --cluster=aws_kubernetes
-        - kubectl config use-context aws_kubernetes
-        # KUBERNETES INIT ends
-        - awk '{while(match($0,"[$]{[^}]*}")) {var=substr($0,RSTART+2,RLENGTH -3);gsub("[$]{"var"}",ENVIRON[var])}}1' < deploy/bitunnel-jobq-handler-rc.yaml > deploy/bitunnel-jobq-handler-rc.local.yaml
-        - cat deploy/bitunnel-jobq-handler-rc.local.yaml
-        - kubectl rolling-update $(kubectl get rc | grep bitunnel-jobq-handler | awk '{print $1}') -f deploy/bitunnel-jobq-handler-rc.local.yaml
-    prod:
-      branch: master
-      commands:
-        # Using docker hub...
-        - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-        - docker push $EXTERNAL_REGISTRY_ENDPOINT/bitunnel-jobq-handler > /dev/null
-        # KUBERNETES INIT begins
-        - kubectl config set-credentials aws_kubernetes-prod --username=$BITUNNEL_KUBERNETES_PROD_API_USER --password=$BITUNNEL_KUBERNETES_PROD_API_PASS
-        - kubectl config set-cluster aws_kubernetes-prod --insecure-skip-tls-verify=true --server=https://$BITUNNEL_KUBERNETES_PROD_API_HOST
-        - kubectl config set-context aws_kubernetes-prod --user=aws_kubernetes-prod --namespace=default --cluster=aws_kubernetes-prod
-        - kubectl config use-context aws_kubernetes-prod
-        # KUBERNETES INIT ends
-        - awk '{while(match($0,"[$]{[^}]*}")) {var=substr($0,RSTART+2,RLENGTH -3);gsub("[$]{"var"}",ENVIRON[var])}}1' < deploy/bitunnel-jobq-handler-rc-prod.yaml > deploy/bitunnel-jobq-handler-rc.local.yaml
-        - cat deploy/bitunnel-jobq-handler-rc.local.yaml
-        - kubectl rolling-update $(kubectl get rc | grep bitunnel-jobq-handler | awk '{print $1}') -f deploy/bitunnel-jobq-handler-rc.local.yaml
+    # In CircleCI 1.0 we used a pre-configured image with a large number of languages and other packages.
+    # In CircleCI 2.0 you can now specify your own image, or use one of our pre-configured images.
+    # The following configuration line tells CircleCI to use the specified docker image as the runtime environment for you job.
+    # We have selected a pre-built image that mirrors the build environment we use on
+    # the 1.0 platform, but we recommend you choose an image more tailored to the needs
+    # of each job. For more information on choosing an image (or alternatively using a
+    # VM instead of a container) see https://circleci.com/docs/2.0/executor-types/
+    # To see the list of pre-built images that CircleCI provides for most common languages see
+    # https://circleci.com/docs/2.0/circleci-images/
+    docker:
+    - image: circleci/build-image:ubuntu-14.04-XXL-upstart-1189-5614f37
+      command: /sbin/init
+    steps:
+    # Machine Setup
+    #   If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
+    # The following `checkout` command checks out your code to your working directory. In 1.0 we did this implicitly. In 2.0 you can choose where in the course of a job your code should be checked out.
+    - checkout
+    # Prepare for artifact and test results  collection equivalent to how it was done on 1.0.
+    # In many cases you can simplify this from what is generated here.
+    # 'See docs on artifact collection here https://circleci.com/docs/2.0/artifacts/'
+    - run: mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
+    # This is based on your 1.0 configuration file or project settings
+    - run:
+        working_directory: ~/tradedepot/bitunnel-jobqueue-handler
+        command: if ["2.7.3" == "system"] || pyenv versions --bare | grep -x -q '2.7.3'; then pyenv global version;else pyenv install --skip-existing  2.7.3 && pyenv global version && pyenv rehash && pip install virtualenv && pip install nose && pip install pep8 && pyenv rehash;fi
+    - run:
+        working_directory: ~/tradedepot/bitunnel-jobqueue-handler
+        command: 'sudo docker info >/dev/null 2>&1 || sudo service docker start; '
+    - run:
+        working_directory: ~/tradedepot/bitunnel-jobqueue-handler
+        command: nvm install 9.0 && nvm alias default 9.0
+    # Dependencies
+    #   This would typically go in either a build or a build-and-test job when using workflows
+    # Restore the dependency cache
+    - restore_cache:
+        keys:
+        # This branch if available
+        - v1-dep-{{ .Branch }}-
+        # Default branch if not
+        - v1-dep-develop-
+        # Any branch if there are none on the default branch - this should be unnecessary if you have your default branch configured correctly
+        - v1-dep-
+    # This is based on your 1.0 configuration file or project settings
+    - run: mkdir -p ~/docker
+    - run: ./scripts/circle_install_dependencies.sh
+    - run: if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
+    - run: docker build -t $EXTERNAL_REGISTRY_ENDPOINT/bitunnel-jobq-handler:build-$CIRCLE_BUILD_NUM .
+    - run: docker save $EXTERNAL_REGISTRY_ENDPOINT/bitunnel-jobq-handler:build-$CIRCLE_BUILD_NUM > ~/docker/image.tar
+    # The following line was run implicitly in your 1.0 builds based on what CircleCI inferred about the structure of your project. In 2.0 you need to be explicit about which commands should be run. In some cases you can discard inferred commands if they are not relevant to your project.
+    - run: if [ -z "${NODE_ENV:-}" ]; then export NODE_ENV=test; fi
+    - run: export PATH="~/tradedepot/bitunnel-jobqueue-handler/node_modules/.bin:$PATH"
+    - run: npm install
+    # Save dependency cache
+    - save_cache:
+        key: v1-dep-{{ .Branch }}-{{ epoch }}
+        paths:
+        # This is a broad list of cache paths to include many possible development environments
+        # You can probably delete some of these entries
+        - vendor/bundle
+        - ~/virtualenvs
+        - ~/.m2
+        - ~/.ivy2
+        - ~/.bundle
+        - ~/.go_workspace
+        - ~/.gradle
+        - ~/.cache/bower
+        - ./node_modules
+    # Test
+    #   This would typically be a build job when using workflows, possibly combined with build
+    # This is based on your 1.0 configuration file or project settings
+    - run: echo "Todo be added"
+    # Deployment
+    # Your existing circle.yml file contains deployment steps.
+    # The config translation tool does not support translating deployment steps
+    # since deployment in CircleCI 2.0 are better handled through workflows.
+    # See the documentation for more information https://circleci.com/docs/2.0/workflows/
+    # Teardown
+    #   If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
+    # Save test results
+    - store_test_results:
+        path: /tmp/circleci-test-results
+    # Save artifacts
+    - store_artifacts:
+        path: /tmp/circleci-artifacts
+    - store_artifacts:
+        path: /tmp/circleci-test-results
