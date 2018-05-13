@@ -17,7 +17,13 @@ jobs:
     environment:
       CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
       CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
-      export PATH="$PATH:~/.yarn/bin"
+      export PATH="$PATH:/home/bin"
+    steps:
+      run:
+        name: Update Path
+        command:
+          echo 'export PATH=$PATH:/home/bin' >>$BASH_ENV
+          source $BASH_ENV
       ##PATH: $PATH:/home/bin
     # In CircleCI 1.0 we used a pre-configured image with a large number of languages and other packages.
     # In CircleCI 2.0 you can now specify your own image, or use one of our pre-configured images.
