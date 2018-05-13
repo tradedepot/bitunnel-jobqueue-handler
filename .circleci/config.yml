@@ -49,7 +49,7 @@ jobs:
     # This is based on your 1.0 configuration file or project settings
     - run:
         working_directory: ~/tradedepot/bitunnel-jobqueue-handler
-        command: if ["2.7.3" == "system"] || pyenv versions --bare | grep -x -q '2.7.3'; then pyenv global version;else pyenv install --skip-existing  2.7.3 && pyenv global version && pyenv rehash && pip install virtualenv && pip install nose && pip install pep8 && pyenv rehash;fi
+        command: if ["2.7.3" == "system"] || pyenv versions --bare | grep -x -q '2.7.3'; then pyenv global 2.7.3;else pyenv install --skip-existing  2.7.3 && pyenv global 2.7.3 && pyenv rehash && pip install virtualenv && pip install nose && pip install pep8 && pyenv rehash;fi
     - run:
         working_directory: ~/tradedepot/bitunnel-jobqueue-handler
         command: 'sudo docker info >/dev/null 2>&1 || sudo service docker start; '
